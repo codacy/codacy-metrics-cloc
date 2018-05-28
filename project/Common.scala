@@ -6,13 +6,9 @@ import sbt.{Def, _}
 
 object Common {
 
-  val clocVersion = scala.io.Source.fromFile(".toolversion").mkString.trim
+  val clocVersion = scala.io.Source.fromFile(".cloc-version").mkString.trim
 
   private val defaultDockerInstallationPath = "/opt/codacy"
-  private val dockerVersion = "docker-17.09.0-ce"
-
-  val genericSettings: Seq[Def.Setting[Seq[Resolver]]] = Seq(
-    resolvers += "Codacy Public Mvn bucket" at "https://s3-eu-west-1.amazonaws.com/public.mvn.codacy.com")
 
   val dockerSettings: Seq[Def.Setting[_]] = Seq(
     packageName in Docker := packageName.value,
@@ -21,7 +17,7 @@ object Common {
                                name.value,
                                Some(version.value)),
     version in Docker := version.value,
-    maintainer in Docker := "Rodrigo Fernandes <rodrigo@codacy.com>",
+    maintainer in Docker := "Codacy <team@codacy.com>",
     dockerBaseImage := "library/openjdk:8-jre-alpine",
     dockerUpdateLatest := true,
     defaultLinuxInstallLocation in Docker := defaultDockerInstallationPath,

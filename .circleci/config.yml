@@ -1,44 +1,97 @@
+# CircleCI 2.0 configuration file
 version: 2
-jobs:
-  build:
-    machine: true
+
+# Re-usable blocks to reduce boilerplate in job definitions.
+references:
+  host_environment_defaults: &host_environment_defaults
+    # Customize the JVM maximum heap limit
+    JAVA_OPTS: -Xmx3200m
+  docker_environment_defaults: &docker_environment_defaults
+    # Customize the JVM to read correct memory values
+    JAVA_OPTS: '-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=1'
+
+  default_java_job: &default_java_job
+    docker:
+      - image: circleci/openjdk:8-jdk
+        environment:
+          <<: *docker_environment_defaults
+    environment:
+      <<: *host_environment_defaults
     working_directory: ~/workdir
+
+  restore_source_code: &restore_source_code
+    restore_cache:
+      keys:
+        - source-code-0.0.3-{{ .Branch }}-{{ .Revision }}
+        - source-code-0.0.3-{{ .Branch }}
+        - source-code-0.0.3
+  restore_dependencies: &restore_dependencies
+    restore_cache:
+      keys:
+        - sbt-ivy2-dependencies-0.0.3-{{ checksum "/tmp/dependencies.cache.tmp" }}
+        - sbt-ivy2-dependencies-0.0.3
+  restore_build: &restore_build
+    restore_cache:
+      keys:
+        - sbt-build-0.0.3-{{ .Branch }}-{{ .Revision }}
+        - sbt-build-0.0.3
+
+jobs:
+  checkout_code:
+    <<: *default_java_job
     steps:
+      - *restore_source_code
       - checkout
+      - save_cache:
+          key: source-code-0.0.3-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ~/workdir
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-build-cache-{{ checksum "build.sbt" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-build-cache-
+  sbt_dependencies:
+    <<: *default_java_job
+    steps:
+      - *restore_source_code
+      - *setup_dependencies_key
+      - *restore_dependencies
+      - run:
+          name: Resolve dependencies
+          command: |
+            sbt update
+      - save_cache:
+          paths:
+            - ~/.ivy2
+            - ~/.sbt
+          key: sbt-ivy2-dependencies-0.0.3-{{ checksum "/tmp/dependencies.cache.tmp" }}
 
-      - run: 
+  compile:
+    <<: *default_java_job
+    steps:
+      - *restore_source_code
+      - *setup_dependencies_key
+      - *restore_dependencies
+      - *restore_build
+      - run:
           name: Compile
           command: ./scripts/compile.sh
-
       - save_cache:
-          key: v1-build-cache-{{ checksum "build.sbt" }}
           paths:
-            - "~/.ivy2"
-            - "~/.m2"
-            - "~/.sbt"
-            - "~/workdir/target"
-            - "~/workdir/project/target"
-            - "~/workdir/project/project"
+            - ~/workdir/target
+            - ~/workdir/project/target
+          key: sbt-build-0.0.3-{{ .Branch }}-{{ .Revision }}
 
-      - run: 
-          name: Lint
-          command: ./scripts/lint.sh
-
+  test:
+    machine: true
+    environment:
+      <<: *host_environment_defaults
+    working_directory: ~/workdir
+    steps:
+      - *restore_source_code
+      - *setup_dependencies_key
+      - *restore_dependencies
+      - *restore_build
       - run:
-          name: Install the tool
-          command: npm install -g cloc@`cat .toolversion`
-
-      - run: 
           name: Test
           command: ./scripts/test.sh
-
       - run:
           name: Store test reports
           working_directory: ~/
@@ -54,12 +107,32 @@ jobs:
       - store_artifacts:
           path: ~/workdir/target/scala-2.12/scoverage-data
 
-      - run: 
-          name: Publish local docker
-          command: ./scripts/deploy.sh 0.1.0-alpha2.$CIRCLE_BUILD_NUM
+  lint:
+    <<: *default_java_job
+    steps:
+      - *restore_source_code
+      - *setup_dependencies_key
+      - *restore_dependencies
+      - *restore_build
+      - run:
+          name: Lint
+          command: ./scripts/lint.sh
 
+  publish:
+    machine: true
+    environment:
+      <<: *host_environment_defaults
+    working_directory: ~/workdir
+    steps:
+      - *restore_source_code
+      - *setup_dependencies_key
+      - *restore_dependencies
+      - *restore_build
+      - run:
+          name: Publish local docker
+          command: ./scripts/publish.sh 0.1.0-alpha2.$CIRCLE_BUILD_NUM
       - deploy:
-          name: Push docker to dockerhub
+          name: Push docker to DockerHub
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
@@ -69,6 +142,27 @@ jobs:
 
 workflows:
   version: 2
-  build-and-deploy:
+  test-and-publish:
     jobs:
-      - build
+      - checkout_code
+      - sbt_dependencies:
+          requires:
+            - checkout_code
+      - compile:
+          requires:
+            - checkout_code
+            - sbt_dependencies
+      - test:
+          requires:
+            - compile
+      - lint:
+          requires:
+            - compile
+      - publish:
+          requires:
+            - test
+            - lint
+          filters:
+            branches:
+              only:
+                - master

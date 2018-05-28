@@ -3,14 +3,29 @@ package codacy.metrics
 import codacy.docker.api.{MetricsConfiguration, Source}
 import codacy.docker.api.metrics.{FileMetrics, MetricsTool}
 import com.codacy.api.dtos.Language
+import com.codacy.docker.api.utils.CommandRunner
 import play.api.libs.json._
-import utils.CommandRunner
 
 import scala.util.Try
 
 case class ClocFileMetrics(filename: String, linesOfCode: Int, linesOfComments: Int, blankLines: Int)
 
 object Cloc extends MetricsTool {
+
+  override def apply(source: Source.Directory,
+                     language: Option[Language], // Filter by language currently not supported
+                     files: Option[Set[Source.File]],
+                     options: Map[MetricsConfiguration.Key, MetricsConfiguration.Value]): Try[List[FileMetrics]] = {
+
+    getLinesCount(source.path, files).map { metricsSeq =>
+      metricsSeq.dropRight(1).map { clocFileMetrics =>
+        FileMetrics(
+          filename = clocFileMetrics.filename,
+          loc = Option(clocFileMetrics.linesOfCode),
+          cloc = Option(clocFileMetrics.linesOfComments.toLong))
+      }
+    }
+  }
 
   private def getLinesCount(targetDirectory: String, files: Option[Set[Source.File]]): Try[List[ClocFileMetrics]] = {
     val result = commandResult(targetDirectory, files)
@@ -35,27 +50,19 @@ object Cloc extends MetricsTool {
   }
 
   private def baseCommand(targetDirectory: String, filesOpt: Option[Set[Source.File]]): Try[List[String]] = {
-    filesOpt match {
+    val commandResult = filesOpt match {
       case Some(files) =>
         CommandRunner.exec(List("cloc", "--json", "--by-file") ++ files.map(_.path), None)
       case None =>
         CommandRunner.exec(List("cloc", targetDirectory, "--json", "--by-file"), None)
     }
-
+    toTry(commandResult).map(_.stdout)
   }
 
-   override def apply(source: Source.Directory,
-                     language: Option[Language], // Filter by language currently not supported
-                     files: Option[Set[Source.File]],
-                     options: Map[MetricsConfiguration.Key, MetricsConfiguration.Value]): Try[List[FileMetrics]] = {
-
-    getLinesCount(source.path, files).map { metricsSeq =>
-      metricsSeq.dropRight(1).map { clocFileMetrics =>
-        FileMetrics(
-          filename = clocFileMetrics.filename,
-          loc = Option(clocFileMetrics.linesOfCode),
-          cloc = Option(clocFileMetrics.linesOfComments.toLong))
-      }
+  private def toTry[A](either: Either[Throwable, A]): Try[A] = {
+    either match {
+      case Left(throwable) => scala.util.Failure(throwable)
+      case Right(value) => scala.util.Success(value)
     }
   }
 }
