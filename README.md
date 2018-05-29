@@ -1,5 +1,8 @@
 # codacy-metrics-cloc
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/11ebf162681e4d45beb0a975926ac34b)](https://www.codacy.com/app/Codacy/codacy-metrics-cloc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=codacy/codacy-metrics-cloc&amp;utm_campaign=Badge_Grade)
+[![CircleCI](https://circleci.com/gh/codacy/codacy-metrics-cloc.svg?style=svg)](https://circleci.com/gh/codacy/codacy-metrics-cloc)
+
 This is the docker engine we use at Codacy to have [Cloc](hhttps://github.com/AlDanial/cloc/) support.
 
 ## Usage
