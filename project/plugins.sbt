@@ -1,3 +1,8 @@
+// Resolvers
+resolvers ++= Seq(
+  "Sonatype snapshots" at "https://oss.sonatype.org/service/local/repositories/releases"
+)
+
 // Static Analysis
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.7")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.5.10")

@@ -22,7 +22,7 @@ object Cloc extends MetricsTool {
         FileMetrics(
           filename = clocFileMetrics.filename,
           loc = Option(clocFileMetrics.linesOfCode),
-          cloc = Option(clocFileMetrics.linesOfComments.toLong))
+          cloc = Option(clocFileMetrics.linesOfComments))
       }
     }
   }
