@@ -18,7 +18,7 @@ class ClocSpec extends Specification {
         val fileMetricsMap =
           Cloc.apply(source = Source.Directory(targetDir), language = None, files = None, options = Map.empty)
 
-        fileMetricsMap.get.toSet shouldEqual expectedFileMetrics
+        fileMetricsMap.get.toSet should beEqualTo(expectedFileMetrics)
       }
 
       "specific files" in {
@@ -30,7 +30,7 @@ class ClocSpec extends Specification {
           files = Some(Set(Source.File(rubyFileMetrics.filename))),
           options = Map.empty)
 
-        fileMetricsMap.get shouldEqual expectedFileMetrics
+        fileMetricsMap.get should beEqualTo(expectedFileMetrics)
       }
     }
   }

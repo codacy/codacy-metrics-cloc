@@ -1,14 +1,14 @@
 package codacy.metrics
 
-import codacy.docker.api.{MetricsConfiguration, Source}
 import codacy.docker.api.metrics.{FileMetrics, MetricsTool}
+import codacy.docker.api.{MetricsConfiguration, Source}
 import com.codacy.api.dtos.Language
 import com.codacy.docker.api.utils.CommandRunner
 import play.api.libs.json._
 
 import scala.util.Try
 
-case class ClocFileMetrics(filename: String, linesOfCode: Int, linesOfComments: Int, blankLines: Int)
+final case class ClocFileMetrics(filename: String, linesOfCode: Int, linesOfComments: Int, blankLines: Int)
 
 object Cloc extends MetricsTool {
 
