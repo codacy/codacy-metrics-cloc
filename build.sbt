@@ -30,8 +30,7 @@ lazy val codacyMetricsCloc = project
     name := "codacy-analysis-cli",
     // App Dependencies
     libraryDependencies ++= Seq(
-      Dependencies.Codacy.metricsSeed,
-      Dependencies.betterFiles
+      Dependencies.Codacy.metricsSeed
     ),
     // Test Dependencies
     libraryDependencies ++= Seq(Dependencies.specs2).map(_ % Test))
