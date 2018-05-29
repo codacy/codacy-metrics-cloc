@@ -62,7 +62,7 @@ object Cloc extends MetricsTool {
   private def toTry[A](either: Either[Throwable, A]): Try[A] = {
     either match {
       case Left(throwable) => scala.util.Failure(throwable)
-      case Right(value) => scala.util.Success(value)
+      case Right(value)    => scala.util.Success(value)
     }
   }
 }

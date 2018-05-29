@@ -29,9 +29,7 @@ lazy val codacyMetricsCloc = project
         scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"))),
     name := "codacy-analysis-cli",
     // App Dependencies
-    libraryDependencies ++= Seq(
-      Dependencies.Codacy.metricsSeed
-    ),
+    libraryDependencies ++= Seq(Dependencies.Codacy.metricsSeed),
     // Test Dependencies
     libraryDependencies ++= Seq(Dependencies.specs2).map(_ % Test))
   .settings(Common.dockerSettings: _*)

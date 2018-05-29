@@ -12,18 +12,14 @@ object Common {
 
   val dockerSettings: Seq[Def.Setting[_]] = Seq(
     packageName in Docker := packageName.value,
-    dockerAlias := DockerAlias(None,
-                               Some("codacy"),
-                               name.value,
-                               Some(version.value)),
+    dockerAlias := DockerAlias(None, Some("codacy"), name.value, Some(version.value)),
     version in Docker := version.value,
     maintainer in Docker := "Codacy <team@codacy.com>",
     dockerBaseImage := "library/openjdk:8-jre-alpine",
     dockerUpdateLatest := true,
     defaultLinuxInstallLocation in Docker := defaultDockerInstallationPath,
     daemonUser in Docker := "docker",
-    dockerEntrypoint := Seq(
-      s"$defaultDockerInstallationPath/bin/${name.value}"),
+    dockerEntrypoint := Seq(s"$defaultDockerInstallationPath/bin/${name.value}"),
     dockerCmd := Seq(),
     dockerCommands := dockerCommands.value.flatMap {
       case cmd @ Cmd("ADD", _) =>
@@ -38,13 +34,10 @@ object Common {
                |npm install -g npm@5 &&
                |npm install -g cloc@$clocVersion &&
                |rm -rf /tmp/* &&
-               |rm -rf /var/cache/apk/*""".stripMargin.replaceAll(System.lineSeparator(), " ")
-          )
-        )
+               |rm -rf /var/cache/apk/*""".stripMargin.replaceAll(System.lineSeparator(), " ")))
 
       case other => List(other)
-    }
-  )
+    })
 
   val compilerFlags: Seq[String] = Seq(
     "-deprecation", // Emit warning and location for usages of deprecated APIs.
