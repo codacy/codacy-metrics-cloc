@@ -30,6 +30,9 @@ object Cloc extends MetricsTool {
   private def getLinesCount(targetDirectory: String, files: Option[Set[Source.File]]): Try[List[ClocFileMetrics]] = {
     val result = commandResult(targetDirectory, files)
 
+    def stripBaseDir(filePath: String) =
+      if(filePath.startsWith("./")) filePath.replace("./", "") else filePath
+
     result.map { json =>
       for {
         metricsMap <- json.asOpt[Map[String, JsValue]].toList
@@ -37,7 +40,7 @@ object Cloc extends MetricsTool {
         linesOfCode <- (metrics \ "code").asOpt[Int]
         linesOfComments <- (metrics \ "comment").asOpt[Int]
         blankLines <- (metrics \ "blank").asOpt[Int]
-      } yield ClocFileMetrics(file, linesOfCode, linesOfComments, blankLines)
+      } yield ClocFileMetrics(stripBaseDir(file), linesOfCode, linesOfComments, blankLines)
     }
   }
 
@@ -50,12 +53,13 @@ object Cloc extends MetricsTool {
   }
 
   private def baseCommand(targetDirectory: String, filesOpt: Option[Set[Source.File]]): Try[List[String]] = {
-    val commandResult = filesOpt match {
-      case Some(files) =>
-        CommandRunner.exec(List("cloc", "--json", "--by-file") ++ files.map(_.path), None)
-      case None =>
-        CommandRunner.exec(List("cloc", targetDirectory, "--json", "--by-file"), None)
-    }
+    val targetDir = new java.io.File(targetDirectory)
+    println(targetDir.isDirectory)
+
+    val clocTarget = filesOpt.map(_.map(_.path)).getOrElse(List("."))
+
+    val commandResult = CommandRunner.exec(List("cloc", "--json", "--by-file") ++ clocTarget, Some(targetDir))
+    
     toTry(commandResult).map(_.stdout)
   }
 

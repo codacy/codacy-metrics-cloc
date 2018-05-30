@@ -4,21 +4,25 @@ import codacy.docker.api.Source
 import codacy.docker.api.metrics.FileMetrics
 import org.specs2.mutable.Specification
 
+import scala.util.Success
+
 class ClocSpec extends Specification {
 
-  val scalaFileMetrics = FileMetrics("src/test/resources/DummyScalaFile.scala", None, Some(5), Some(4))
-  val rubyFileMetrics = FileMetrics("src/test/resources/HelloWorld.rb", None, Some(10), Some(0))
+  val scalaFileMetrics = FileMetrics("codacy/metrics/DummyScalaFile.scala", None, Some(5), Some(4))
+  val rubyFileMetrics = FileMetrics("codacy/metrics/HelloWorld.rb", None, Some(10), Some(0))
 
   val targetDir = "src/test/resources"
 
   "Cloc" should {
     "get metrics" in {
       "all files within a directory" in {
-        val expectedFileMetrics = Set(scalaFileMetrics, rubyFileMetrics)
+        val expectedFileMetrics = List(scalaFileMetrics, rubyFileMetrics)
         val fileMetricsMap =
           Cloc.apply(source = Source.Directory(targetDir), language = None, files = None, options = Map.empty)
 
-        fileMetricsMap.get.toSet should beEqualTo(expectedFileMetrics)
+        fileMetricsMap should beLike {
+          case Success(elems) => elems should containTheSameElementsAs(expectedFileMetrics)
+        }
       }
 
       "specific files" in {
@@ -30,7 +34,9 @@ class ClocSpec extends Specification {
           files = Some(Set(Source.File(rubyFileMetrics.filename))),
           options = Map.empty)
 
-        fileMetricsMap.get should beEqualTo(expectedFileMetrics)
+        fileMetricsMap should beLike {
+          case Success(elems) => elems should containTheSameElementsAs(expectedFileMetrics)
+        }
       }
     }
   }
