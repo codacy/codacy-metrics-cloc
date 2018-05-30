@@ -31,7 +31,7 @@ object Cloc extends MetricsTool {
     val result = commandResult(targetDirectory, files)
 
     def stripBaseDir(filePath: String) =
-      if(filePath.startsWith("./")) filePath.replace("./", "") else filePath
+      if (filePath.startsWith("./")) filePath.replace("./", "") else filePath
 
     result.map { json =>
       for {
@@ -59,7 +59,7 @@ object Cloc extends MetricsTool {
     val clocTarget = filesOpt.map(_.map(_.path)).getOrElse(List("."))
 
     val commandResult = CommandRunner.exec(List("cloc", "--json", "--by-file") ++ clocTarget, Some(targetDir))
-    
+
     toTry(commandResult).map(_.stdout)
   }
 
