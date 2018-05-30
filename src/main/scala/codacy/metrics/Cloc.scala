@@ -54,7 +54,6 @@ object Cloc extends MetricsTool {
 
   private def baseCommand(targetDirectory: String, filesOpt: Option[Set[Source.File]]): Try[List[String]] = {
     val targetDir = new java.io.File(targetDirectory)
-    println(targetDir.isDirectory)
 
     val clocTarget = filesOpt.map(_.map(_.path)).getOrElse(List("."))
 
