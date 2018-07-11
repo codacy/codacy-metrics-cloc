@@ -18,7 +18,7 @@ object Cloc extends MetricsTool {
                      options: Map[MetricsConfiguration.Key, MetricsConfiguration.Value]): Try[List[FileMetrics]] = {
 
     getLinesCount(source.path, files).map { metricsSeq =>
-      metricsSeq.dropRight(1).map { clocFileMetrics =>
+      metricsSeq.map { clocFileMetrics =>
         FileMetrics(
           filename = clocFileMetrics.filename,
           loc = Option(clocFileMetrics.linesOfCode),
@@ -36,7 +36,7 @@ object Cloc extends MetricsTool {
     result.map { json =>
       for {
         metricsMap <- json.asOpt[Map[String, JsValue]].toList
-        (file, metrics) <- metricsMap
+        (file, metrics) <- metricsMap if file.startsWith(targetDirectory)
         linesOfCode <- (metrics \ "code").asOpt[Int]
         linesOfComments <- (metrics \ "comment").asOpt[Int]
         blankLines <- (metrics \ "blank").asOpt[Int]
