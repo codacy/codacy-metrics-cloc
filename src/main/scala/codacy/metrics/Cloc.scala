@@ -37,13 +37,16 @@ object Cloc extends MetricsTool {
       for {
         metricsMap <- json.asOpt[Map[String, JsValue]].toList
         (file, metrics) <- metricsMap
-        println(s"File: $file")
-        println(s"TargetDir: $targetDirectory")
-        if file.startsWith(targetDirectory)
+
+        //if file.startsWith(targetDirectory)
         linesOfCode <- (metrics \ "code").asOpt[Int]
         linesOfComments <- (metrics \ "comment").asOpt[Int]
         blankLines <- (metrics \ "blank").asOpt[Int]
-      } yield ClocFileMetrics(stripBaseDir(file), linesOfCode, linesOfComments, blankLines)
+      } yield {
+        println(s"File: $file")
+        println(s"TargetDir: $targetDirectory")
+        ClocFileMetrics(stripBaseDir(file), linesOfCode, linesOfComments, blankLines)
+      }
     }
   }
 
