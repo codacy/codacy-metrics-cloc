@@ -1,5 +1,6 @@
 package codacy.metrics
 
+import better.files._
 import codacy.docker.api.metrics.{FileMetrics, MetricsTool}
 import codacy.docker.api.{MetricsConfiguration, Source}
 import com.codacy.api.dtos.Language
@@ -36,11 +37,13 @@ object Cloc extends MetricsTool {
     result.map { json =>
       for {
         metricsMap <- json.asOpt[Map[String, JsValue]].toList
-        (file, metrics) <- metricsMap if file.startsWith(targetDirectory)
+        (file, metrics) <- metricsMap if (targetDirectory / file).exists
         linesOfCode <- (metrics \ "code").asOpt[Int]
         linesOfComments <- (metrics \ "comment").asOpt[Int]
         blankLines <- (metrics \ "blank").asOpt[Int]
-      } yield ClocFileMetrics(stripBaseDir(file), linesOfCode, linesOfComments, blankLines)
+      } yield {
+        ClocFileMetrics(stripBaseDir(file), linesOfCode, linesOfComments, blankLines)
+      }
     }
   }
 
