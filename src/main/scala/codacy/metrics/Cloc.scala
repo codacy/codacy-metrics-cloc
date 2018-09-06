@@ -1,10 +1,10 @@
 package codacy.metrics
 
 import better.files._
-import codacy.docker.api.metrics.{FileMetrics, MetricsTool}
-import codacy.docker.api.{MetricsConfiguration, Source}
-import com.codacy.api.dtos.Language
 import com.codacy.docker.api.utils.CommandRunner
+import com.codacy.plugins.api.languages.Language
+import com.codacy.plugins.api.metrics.{FileMetrics, MetricsTool}
+import com.codacy.plugins.api.{Options, Source}
 import play.api.libs.json._
 
 import scala.util.Try
@@ -14,9 +14,9 @@ final case class ClocFileMetrics(filename: String, linesOfCode: Int, linesOfComm
 object Cloc extends MetricsTool {
 
   override def apply(source: Source.Directory,
-                     language: Option[Language], // Filter by language currently not supported
+                     language: Option[Language],
                      files: Option[Set[Source.File]],
-                     options: Map[MetricsConfiguration.Key, MetricsConfiguration.Value]): Try[List[FileMetrics]] = {
+                     options: Map[Options.Key, Options.Value]): Try[List[FileMetrics]] = {
 
     getLinesCount(source.path, files).map { metricsSeq =>
       metricsSeq.map { clocFileMetrics =>
