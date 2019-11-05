@@ -1,36 +1,47 @@
-import sbt.Keys._
-import sbt._
+import com.typesafe.sbt.packager.docker.{Cmd, DockerAlias}
 
-name := """codacy-metrics-cloc"""
+enablePlugins(JavaAppPackaging)
+enablePlugins(DockerPlugin)
+organization := "com.codacy"
+scalaVersion := "2.13.1"
+name := "codacy-metrics-cloc"
+libraryDependencies ++= Seq(
+  "com.codacy" %% "codacy-metrics-scala-seed" % "0.2.0",
+  "org.specs2" %% "specs2-core" % "4.8.0" % Test)
 
-version := "1.0.0-SNAPSHOT"
+mappings in Universal ++= {
+  (resourceDirectory in Compile).map { resourceDir: File =>
+    val src = resourceDir / "docs"
+    val dest = "/docs"
 
-val scalaBinaryVersionNumber = "2.12"
-val scalaVersionNumber = s"$scalaBinaryVersionNumber.4"
+    for {
+      path <- src.allPaths.get if !path.isDirectory
+    } yield path -> path.toString.replaceFirst(src.toString, dest)
+  }
+}.value
 
-scalaVersion := scalaVersionNumber
-scalaVersion in ThisBuild := scalaVersionNumber
-scalaBinaryVersion in ThisBuild := scalaBinaryVersionNumber
+dockerBaseImage := "openjdk:8-jre-alpine"
+Docker / daemonUser := "docker"
+Docker / daemonGroup := "docker"
+dockerEntrypoint := Seq(s"/opt/docker/bin/${name.value}")
 
-scapegoatVersion in ThisBuild := "1.3.5"
+val clocVersion = scala.io.Source.fromFile(".cloc-version").mkString.trim
 
-lazy val codacyMetricsCloc = project
-  .in(file("."))
-  .enablePlugins(JavaAppPackaging)
-  .enablePlugins(DockerPlugin)
-  .settings(
-    inThisBuild(
-      List(
-        organization := "com.codacy",
-        scalaVersion := scalaVersionNumber,
-        version := "0.1.0-SNAPSHOT",
-        resolvers := Seq("Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/releases")) ++ resolvers.value,
-        scalacOptions ++= Common.compilerFlags,
-        scalacOptions in Test ++= Seq("-Yrangepos"),
-        scalacOptions in (Compile, console) --= Seq("-Ywarn-unused:imports", "-Xfatal-warnings"))),
-    name := "codacy-analysis-cli",
-    // App Dependencies
-    libraryDependencies ++= Seq(Dependencies.Codacy.metricsSeed),
-    // Test Dependencies
-    libraryDependencies ++= Seq(Dependencies.specs2).map(_ % Test))
-  .settings(Common.dockerSettings: _*)
+dockerCommands := dockerCommands.value.flatMap {
+  case cmd @ Cmd("ADD", _) =>
+    List(
+      Cmd("RUN", "adduser -u 2004 -D docker"),
+      cmd,
+      Cmd(
+        "RUN",
+        s"""apk update &&
+           |apk add perl &&
+           |apk add bash curl nodejs-npm &&
+           |npm install -g npm@5 &&
+           |npm install -g cloc@$clocVersion &&
+           |rm -rf /tmp/* &&
+           |rm -rf /var/cache/apk/*""".stripMargin.replaceAll(System.lineSeparator(), " ")),
+      Cmd("RUN", "mv /opt/docker/docs /docs"))
+
+  case other => List(other)
+}
