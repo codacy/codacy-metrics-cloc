@@ -60,7 +60,8 @@ object Cloc extends MetricsTool {
 
     val clocTarget = filesOpt.fold(Set("."))(_.map(_.path))
 
-    val commandResult = CommandRunner.exec(List("cloc", "--json", "--by-file") ++ clocTarget, Some(targetDir))
+    val commandResult =
+      CommandRunner.exec(List("cloc", "--json", "--by-file", "--skip-uniqueness") ++ clocTarget, Some(targetDir))
 
     toTry(commandResult).map(_.stdout)
   }
