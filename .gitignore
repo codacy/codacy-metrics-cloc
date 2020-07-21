@@ -84,3 +84,4 @@ project/plugins/project/
 ## Metals ##
 .metals
 .bloop
+.DS_Store
