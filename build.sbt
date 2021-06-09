@@ -6,7 +6,7 @@ organization := "com.codacy"
 scalaVersion := "2.13.1"
 name := "codacy-metrics-cloc"
 libraryDependencies ++= Seq(
-  "com.codacy" %% "codacy-metrics-scala-seed" % "0.3.0",
+  "com.codacy" %% "codacy-metrics-scala-seed" % "0.3.1",
   "org.specs2" %% "specs2-core" % "4.8.0" % Test)
 
 mappings in Universal ++= {
