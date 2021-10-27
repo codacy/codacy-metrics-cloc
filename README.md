@@ -12,7 +12,8 @@ This is the docker engine we use at Codacy to have [cloc](hhttps://github.com/Al
 You can create the docker by doing:
 
 ```bash
-sbt docker:publishLocal
+sbt stage
+docker build -t codacy-metrics-cloc .
 ```
 
 The docker is ran with the following command:
@@ -20,20 +21,6 @@ The docker is ran with the following command:
 ```bash
 docker run -it -v $srcDir:/src  <DOCKER_NAME>:<DOCKER_VERSION>
 docker run -it -v $PWD/src/test/resources:/src codacy/codacy-metrics-cloc:latest
-```
-
-## Test
-
-Before running the tests, you need to install cloc:
-
-```bash
-npm install -g cloc
-```
-
-After that, you can run the tests:
-
-```bash
-sbt test
 ```
 
 ## What is Codacy

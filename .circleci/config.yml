@@ -13,20 +13,11 @@ workflows:
       - codacy/sbt:
           name: publish_docker_local
           cmd: |
-            # needed to run tests
-            curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
-            sudo bash nodesource_setup.sh
-            sudo apt-get -y update
-            sudo apt-get install -y nodejs
-            sudo npm install -g cloc@`cat .cloc-version`
-            sbt "set scalafmtUseIvy in ThisBuild := false;
-                 scalafmt::test;
+            sbt "scalafmt::test;
                  test:scalafmt::test;
                  sbt:scalafmt::test;
-                 test;
-                 set name := \"$CIRCLE_PROJECT_REPONAME\";
-                 set version in Docker := \"latest\";
-                 docker:publishLocal"
+                 stage"
+            docker build -t $CIRCLE_PROJECT_REPONAME:latest .
             docker save --output docker-image.tar $CIRCLE_PROJECT_REPONAME:latest
           persist_to_workspace: true
           requires:
