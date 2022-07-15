@@ -1,7 +1,7 @@
 package codacy.metrics
 
 import better.files._
-import com.codacy.docker.api.utils.CommandRunner
+import com.codacy.docker.api.utils.{CommandResult, CommandRunner}
 import com.codacy.plugins.api.languages.Language
 import com.codacy.plugins.api.metrics.{FileMetrics, MetricsTool}
 import com.codacy.plugins.api.{Options, Source}
@@ -63,13 +63,21 @@ object Cloc extends MetricsTool {
     val commandResult =
       CommandRunner.exec(List("cloc", "--json", "--by-file", "--skip-uniqueness") ++ clocTarget, Some(targetDir))
 
-    toTry(commandResult).map(_.stdout)
+    resolveErrors(commandResult, clocTarget)
   }
 
-  private def toTry[A](either: Either[Throwable, A]): Try[A] = {
+  private def resolveErrors(either: Either[Throwable, CommandResult], targetFiles: Set[String]): Try[List[String]] = {
     either match {
-      case Left(throwable) => scala.util.Failure(throwable)
-      case Right(value)    => scala.util.Success(value)
+      case Left(throwable)                    => scala.util.Failure(throwable)
+      case Right(CommandResult(0, stdOut, _)) => scala.util.Success(stdOut)
+      case Right(CommandResult(exitCode, stdOut, stdErr)) =>
+        val toolErrorMessage =
+          s"""Cloc exited with code $exitCode
+             |  - targeting files: $targetFiles
+             |  - stderr: $stdErr
+             |  - stdout: $stdOut
+             |""".stripMargin
+        scala.util.Failure(new Exception(toolErrorMessage))
     }
   }
 }
