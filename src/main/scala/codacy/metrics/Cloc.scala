@@ -63,7 +63,7 @@ object Cloc extends MetricsTool {
 
     // It's a valid output of the tool to exit with no errors but still have the
     // output as empty. Example: asking the tool to analyze a file that
-    // doesn't exist will terminnte with 0 and empty output.
+    // doesn't exist will terminate with 0 and empty output.
     // We shouldn't try to parse empty string since that's not valid json anyway.
 
     commandRes.flatMap { fullOutput =>
@@ -84,12 +84,9 @@ object Cloc extends MetricsTool {
       Set[String](".")
     } { _.map(_.path) }
 
-    // TODO: problem, if the SET is empty, which is possible by giving files: [] in the codacyrc
-    // file, then the tool fails since clocTarget expands to "" and the tool errors out without knowing
-    // what to analyze when being called.
-    // temporary protection by just not running the tool, since we are being told to run the tool
-    // for exactly 0 files, maybe that's what should be expected???
-    // just need to confirm this is what we want
+    // If the files Set is empty, which is possible by giving files: [] in the codacyrc,
+    // then the tool fails since clocTarget expands to "" and the tool itself errors out.
+    // Protecting the call to ensure the tool is NOT called when files to process are empty.
 
     if (clocTarget.isEmpty) {
       Success(List.empty)
