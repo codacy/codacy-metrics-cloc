@@ -88,3 +88,6 @@ project/plugins/project/
 .DS_Store
 
 node_modules
+
+.bloop
+.metals
