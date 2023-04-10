@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.17.0
+ARG BASE_IMAGE=alpine:3.17.3
 
 FROM $BASE_IMAGE
 RUN apk add npm bash perl openjdk11
