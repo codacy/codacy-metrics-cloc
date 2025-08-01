@@ -91,3 +91,10 @@ node_modules
 
 .bloop
 .metals
+
+#Ignore vscode AI rules
+.github/copilot-instructions.md
+
+project/metals.sbt
+project/project/
+.vscode/
